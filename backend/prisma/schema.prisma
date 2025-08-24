@@ -1,0 +1,55 @@
+generator client {
+	provider = "prisma-client-js"
+}
+
+datasource db {
+	provider = "postgresql"
+	url      = env("DATABASE_URL")
+}
+
+model Document {
+	id            String            @id @default(cuid())
+	createdAt     DateTime          @default(now())
+	updatedAt     DateTime          @updatedAt
+	filename      String
+	mimeType      String
+	sizeBytes     Int
+	storagePath   String
+	text          String?
+	type          DocumentType       @default(BILL)
+
+	fields        ExtractedField[]
+	issues        ComplianceIssue[]
+}
+
+model ExtractedField {
+	id          String   @id @default(cuid())
+	createdAt   DateTime @default(now())
+	documentId  String
+	name        String
+	value       String
+	confidence  Float?
+	document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model ComplianceIssue {
+	id               String   @id @default(cuid())
+	createdAt        DateTime @default(now())
+	documentId       String
+	code             String
+	description      String
+	severity         Severity @default(WARNING)
+	resolved         Boolean  @default(false)
+	document         Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+enum Severity {
+	INFO
+	WARNING
+	ERROR
+}
+
+enum DocumentType {
+	BILL
+	CHECK
+}
